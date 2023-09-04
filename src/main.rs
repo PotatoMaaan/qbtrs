@@ -5,7 +5,10 @@ use std::{
     sync::Arc,
 };
 
-use backend::{add_torrent, auth_interactive, content_torrent, delete_torrents, list_torrents};
+use backend::{
+    add_torrent, auth_interactive, content_torrent, delete_torrents, list_torrents, pause_torrent,
+    resume_torrent,
+};
 use clap::Parser;
 use cli::BaseCommand;
 use directories::ProjectDirs;
@@ -13,7 +16,7 @@ use reqwest::{
     blocking::{Client, ClientBuilder},
     cookie::Jar,
 };
-use serde::{de, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 mod backend;
@@ -34,7 +37,7 @@ fn main() {
 
     match args.commands {
         cli::Commands::Auth(args) => match args.commands {
-            cli::AuthCommands::Activate { url } => {
+            cli::AuthCommands::SetDefault { url } => {
                 config.activate_url(&url);
             }
             cli::AuthCommands::List { show_secrets } => {
@@ -85,11 +88,22 @@ fn main() {
                 cli::TorrentCommands::Delete {
                     hashes,
                     delete_files,
-                } => delete_torrents(&info, hashes, delete_files),
-                cli::TorrentCommands::Pause { hash } => todo!(),
-                cli::TorrentCommands::Resume { hash } => todo!(),
+                } => {
+                    if hashes.len() < 1 {
+                        eprintln!("At least one hash must be provided!");
+                        exit(1);
+                    }
+
+                    delete_torrents(&info, hashes, delete_files)
+                }
+                cli::TorrentCommands::Pause { hash } => pause_torrent(&info, hash),
+                cli::TorrentCommands::Resume { hash } => resume_torrent(&info, hash),
                 cli::TorrentCommands::Content { hash } => content_torrent(&info, hash),
             }
+        }
+        cli::Commands::ConfigDir => {
+            println!("Config dir at: {}", dirs.config_dir().display());
+            exit(0);
         }
     }
     save_config(&dirs, &config);

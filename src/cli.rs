@@ -9,6 +9,8 @@ pub struct BaseCommand {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum Commands {
+    /// Print the location if the config dir and exit
+    ConfigDir,
     Auth(Auth),
     Torrent(Torrent),
 }
@@ -22,8 +24,9 @@ pub struct Auth {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum AuthCommands {
-    /// Use this url as the default
-    Activate { url: Url },
+    /// set a url as the default
+    SetDefault { url: Url },
+
     /// List all active urls
     List {
         /// Print the actual cookies
@@ -46,6 +49,7 @@ pub enum AuthCommands {
     Remove { url: Url },
 }
 
+/// Control torrents with actions such as add, pause, etc.
 #[derive(Debug, Clone, Args)]
 pub struct Torrent {
     #[command(subcommand)]
@@ -54,7 +58,7 @@ pub struct Torrent {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum TorrentCommands {
-    // List all torrents
+    /// List all torrents
     List {
         /// Sort the torrents by this value
         #[arg(short, long)]
@@ -82,6 +86,7 @@ pub enum TorrentCommands {
         #[arg(short, long)]
         pause: bool,
     },
+    /// Delete one or multiple torrents (and optionally their files on disk)
     Delete {
         /// The hashs of the torrents to be deleted
         hashes: Vec<String>,
@@ -90,10 +95,12 @@ pub enum TorrentCommands {
         #[arg(short, long)]
         delete_files: bool,
     },
+    /// Pasue a torrent
     Pause {
         /// The hash of the torrent
         hash: String,
     },
+    /// Resume a torrent
     Resume {
         /// The hash of the torrent
         hash: String,

@@ -96,6 +96,7 @@ pub fn progress_render(progress: f64) -> String {
     return s;
 }
 
+#[allow(unused)]
 pub enum DefaultChoice {
     Yes,
     No,
@@ -120,6 +121,10 @@ pub fn confirm(text: &str, default: DefaultChoice) -> bool {
         .to_ascii_lowercase();
 
     match line.as_str() {
+        "" => match default {
+            DefaultChoice::Yes => true,
+            DefaultChoice::No => false,
+        },
         "y" => true,
         "n" => false,
         _ => false,

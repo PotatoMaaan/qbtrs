@@ -7,7 +7,7 @@ use std::{
 use humansize::{format_size, DECIMAL};
 use reqwest::blocking::{multipart::Form, ClientBuilder};
 use rpassword::read_password;
-use serde::{de, Deserialize};
+use serde::Deserialize;
 use url::Url;
 
 mod util;
@@ -116,6 +116,7 @@ pub fn list_torrents(
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(unused)]
 struct TorrentFileResponse {
     index: u64,
     name: String,
@@ -226,4 +227,36 @@ pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bo
         .unwrap();
 
     println!("Sent request to delete {} torrent(s).", hashes.len());
+}
+
+pub fn pause_torrent(info: &RequestInfo, hash: String) {
+    let mut formdata: HashMap<&str, String> = HashMap::new();
+
+    formdata.insert("hashes", hash);
+
+    // Again, the response is completely empty.....
+    let _pause_res = info
+        .client
+        .post(info.url.join("api/v2/torrents/pause").unwrap())
+        .form(&formdata)
+        .send()
+        .unwrap();
+
+    println!("Sent request to pause torrent.");
+}
+
+pub fn resume_torrent(info: &RequestInfo, hash: String) {
+    let mut formdata: HashMap<&str, String> = HashMap::new();
+
+    formdata.insert("hashes", hash);
+
+    // Again, the response is completely empty.....
+    let _pause_res = info
+        .client
+        .post(info.url.join("api/v2/torrents/resume").unwrap())
+        .form(&formdata)
+        .send()
+        .unwrap();
+
+    println!("Sent request to resume torrent.");
 }
