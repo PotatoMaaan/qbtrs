@@ -250,7 +250,7 @@ pub fn resume_torrent(info: &RequestInfo, hash: String) {
 
     formdata.insert("hashes", hash);
 
-    // Again, the response is completely empty.....
+    // And again, the response is completely empty yet again....
     let _pause_res = info
         .client
         .post(info.url.join("api/v2/torrents/resume").unwrap())
