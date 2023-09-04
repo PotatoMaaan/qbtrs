@@ -1,18 +1,22 @@
 use std::{
     collections::HashMap,
     fs::{create_dir, write, File},
-    io::{self, Write},
     process::exit,
+    sync::Arc,
 };
 
+use backend::{auth_with_ask, list_torrents};
 use clap::Parser;
 use cli::BaseCommand;
 use directories::ProjectDirs;
-use reqwest::blocking::ClientBuilder;
-use rpassword::read_password;
+use reqwest::{
+    blocking::{Client, ClientBuilder},
+    cookie::Jar,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+mod backend;
 mod cli;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -50,12 +54,58 @@ fn main() {
                 config.remove_url(&url);
             }
         },
-        cli::Commands::Torrent(args) => {}
+        cli::Commands::Torrent(args) => {
+            if config.default.is_none() || config.cookies.len() <= 0 {
+                eprintln!("No (default) url configured. Please configure a url using the auth subcommand!");
+                exit(1);
+            }
+
+            let info = config.get_jar_and_client();
+
+            match args.commands {
+                cli::TorrentCommands::List { verbose } => {
+                    list_torrents(&info, verbose);
+                }
+                cli::TorrentCommands::Add { url_or_file } => todo!(),
+                cli::TorrentCommands::Remove { id } => todo!(),
+                cli::TorrentCommands::Pause { id } => todo!(),
+                cli::TorrentCommands::Resume { id } => todo!(),
+            }
+        }
     }
     save_config(&dirs, &config);
 }
 
+pub struct RequestInfo {
+    pub jar: Arc<Jar>,
+    pub client: Client,
+    pub url: Url,
+}
+
 impl Config {
+    fn get_jar_and_client(&self) -> RequestInfo {
+        let url = &self.default.clone().unwrap();
+
+        let cookie = self
+            .cookies
+            .get(url)
+            .expect("Invalid default value")
+            .to_owned();
+
+        let jar = Arc::new(Jar::default());
+        jar.add_cookie_str(&cookie, url);
+        let client = ClientBuilder::new()
+            .cookie_provider(jar.clone())
+            .build()
+            .unwrap();
+
+        return RequestInfo {
+            jar,
+            client,
+            url: url.clone(),
+        };
+    }
+
     fn remove_url(&mut self, url: &Url) {
         if self.default == Some(url.clone()) {
             self.default = None;
@@ -122,31 +172,4 @@ fn load_config(dirs: &ProjectDirs) -> Config {
 
 fn get_dirs() -> ProjectDirs {
     return ProjectDirs::from("", "", "qbtrs").unwrap();
-}
-
-fn auth_with_ask(url: Url, username: String) -> Option<(Url, String)> {
-    let client = ClientBuilder::new().cookie_store(true).build().unwrap();
-
-    print!("Please provide a password for user {}: ", username);
-    io::stdout().flush().unwrap();
-    let password = read_password().unwrap();
-
-    let mut map: HashMap<&str, &str> = HashMap::new();
-    map.insert("username", &username);
-    map.insert("password", &password);
-
-    let login_res = client
-        .post(url.join("api/v2/auth/login").unwrap().to_string())
-        .header("Referer", &url.to_string())
-        .form(&map)
-        .send()
-        .unwrap();
-
-    let cookies: Vec<_> = login_res.cookies().collect();
-
-    if let Some(cookie) = cookies.get(0) {
-        return Some((url, cookie.value().to_string()));
-    } else {
-        return None;
-    }
 }

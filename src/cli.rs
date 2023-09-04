@@ -13,6 +13,7 @@ pub enum Commands {
     Torrent(Torrent),
 }
 
+/// Control authentication for different urls
 #[derive(Debug, Clone, Args)]
 pub struct Auth {
     #[command(subcommand)]
@@ -25,10 +26,11 @@ pub enum AuthCommands {
     Activate { url: Url },
     /// List all active urls
     List {
+        /// Print the actual cookies
         #[arg(long)]
         show_secrets: bool,
     },
-    /// Authenticate a url with a username and password. The Resulting cookie is stored on disk, beware!
+    /// Authenticate a url with a username and password. (password input is interactive) The Resulting cookie is stored on disk, beware!
     Add { url: Url, username: String },
     /// Removes the given url
     Remove { url: Url },
@@ -42,6 +44,20 @@ pub struct Torrent {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum TorrentCommands {
-    List,
-    Add { url_or_file: String },
+    List {
+        #[arg(short, long)]
+        verbose: bool,
+    },
+    Add {
+        url_or_file: String,
+    },
+    Remove {
+        id: String,
+    },
+    Pause {
+        id: String,
+    },
+    Resume {
+        id: String,
+    },
 }
