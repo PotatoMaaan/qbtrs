@@ -30,8 +30,18 @@ pub enum AuthCommands {
         #[arg(long)]
         show_secrets: bool,
     },
-    /// Authenticate a url with a username and password. (password input is interactive) The Resulting cookie is stored on disk, beware!
-    Add { url: Url, username: String },
+    /// Authenticate a url with a username and password. (password input is interactive by default) The Resulting cookie is stored on disk, beware!
+    Add {
+        /// URL of the qbittorrent api
+        url: Url,
+
+        /// The username to use
+        username: String,
+
+        /// To avoid passwords in the shell history, the password is asked for interactively by default. You can bypass this by specifying a password here
+        #[arg(short, long)]
+        password: Option<String>,
+    },
     /// Removes the given url
     Remove { url: Url },
 }
@@ -44,6 +54,7 @@ pub struct Torrent {
 
 #[derive(Subcommand, Clone, Debug)]
 pub enum TorrentCommands {
+    // List all torrents
     List {
         /// Sort the torrents by this value
         #[arg(short, long)]
@@ -57,27 +68,40 @@ pub enum TorrentCommands {
         #[arg(short, long)]
         limit: Option<u32>,
     },
-    Status {
-        id: String,
-    },
+    /// Show the contents of a specific torrent
     Content {
-        id: String,
+        /// The hash of the torrent
+        hash: String,
     },
+    /// Add a new torrent from a file or URL
     Add {
-        url_or_file: String,
+        /// A url (magnet) or a path to a torrent file
+        url_or_path: String,
+
+        /// pause the torrent upon creation (don't download immediately)
+        #[arg(short, long)]
+        pause: bool,
     },
-    Remove {
-        id: String,
+    Delete {
+        /// The hashs of the torrents to be deleted
+        hashes: Vec<String>,
+
+        /// DANGER! This will also delete the downloaded files from the filesystem
+        #[arg(short, long)]
+        delete_files: bool,
     },
     Pause {
-        id: String,
+        /// The hash of the torrent
+        hash: String,
     },
     Resume {
-        id: String,
+        /// The hash of the torrent
+        hash: String,
     },
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[allow(non_camel_case_types)]
 pub enum TorrentSortingOptions {
     Name,
     Hash,
@@ -85,4 +109,5 @@ pub enum TorrentSortingOptions {
     Size,
     Ratio,
     State,
+    Added_On,
 }

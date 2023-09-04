@@ -5,7 +5,7 @@ use std::{
     sync::Arc,
 };
 
-use backend::{auth_with_ask, list_torrents};
+use backend::{add_torrent, auth_interactive, content_torrent, delete_torrents, list_torrents};
 use clap::Parser;
 use cli::BaseCommand;
 use directories::ProjectDirs;
@@ -13,7 +13,7 @@ use reqwest::{
     blocking::{Client, ClientBuilder},
     cookie::Jar,
 };
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use url::Url;
 
 mod backend;
@@ -40,8 +40,12 @@ fn main() {
             cli::AuthCommands::List { show_secrets } => {
                 config.list_cookies(show_secrets);
             }
-            cli::AuthCommands::Add { url, username } => {
-                if let Some((url, cookie)) = auth_with_ask(url, username) {
+            cli::AuthCommands::Add {
+                url,
+                username,
+                password,
+            } => {
+                if let Some((url, cookie)) = auth_interactive(url, username, password) {
                     println!("Authentication successful!");
                     config.activate_url(&url);
                     config.cookies.insert(url, cookie);
@@ -60,7 +64,7 @@ fn main() {
                 exit(1);
             }
 
-            let info = config.get_jar_and_client();
+            let info = config.get_request_info();
 
             match args.commands {
                 cli::TorrentCommands::List {
@@ -75,12 +79,16 @@ fn main() {
                         limit,
                     );
                 }
-                cli::TorrentCommands::Add { url_or_file } => todo!(),
-                cli::TorrentCommands::Remove { id } => todo!(),
-                cli::TorrentCommands::Pause { id } => todo!(),
-                cli::TorrentCommands::Resume { id } => todo!(),
-                cli::TorrentCommands::Status { id } => todo!(),
-                cli::TorrentCommands::Content { id } => todo!(),
+                cli::TorrentCommands::Add { url_or_path, pause } => {
+                    add_torrent(&info, url_or_path, pause)
+                }
+                cli::TorrentCommands::Delete {
+                    hashes,
+                    delete_files,
+                } => delete_torrents(&info, hashes, delete_files),
+                cli::TorrentCommands::Pause { hash } => todo!(),
+                cli::TorrentCommands::Resume { hash } => todo!(),
+                cli::TorrentCommands::Content { hash } => content_torrent(&info, hash),
             }
         }
     }
@@ -94,7 +102,7 @@ pub struct RequestInfo {
 }
 
 impl Config {
-    fn get_jar_and_client(&self) -> RequestInfo {
+    fn get_request_info(&self) -> RequestInfo {
         let url = &self.default.clone().unwrap();
 
         let cookie = self

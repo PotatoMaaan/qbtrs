@@ -1,3 +1,5 @@
+use std::io::{self, BufRead, Write};
+
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -78,10 +80,6 @@ impl std::fmt::Display for TorrentState {
     }
 }
 
-pub fn bytes_to_gib(bytes: u64) -> f64 {
-    (bytes as f64) / 1024.0 / 1024.0 / 1024.0
-}
-
 pub fn progress_render(progress: f64) -> String {
     let progress = (progress * 10.0) as u32;
     let mut s = "<".to_string();
@@ -96,4 +94,34 @@ pub fn progress_render(progress: f64) -> String {
     s.push_str(">");
 
     return s;
+}
+
+pub enum DefaultChoice {
+    Yes,
+    No,
+}
+
+pub fn confirm(text: &str, default: DefaultChoice) -> bool {
+    print!(
+        "{text} [{}] ",
+        match default {
+            DefaultChoice::No => "y/N",
+            DefaultChoice::Yes => "Y/n",
+        }
+    );
+    io::stdout().flush().unwrap();
+
+    let line = io::stdin()
+        .lock()
+        .lines()
+        .next()
+        .unwrap()
+        .unwrap()
+        .to_ascii_lowercase();
+
+    match line.as_str() {
+        "y" => true,
+        "n" => false,
+        _ => false,
+    }
 }

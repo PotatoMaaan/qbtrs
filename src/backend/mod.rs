@@ -1,32 +1,31 @@
 use std::{
     collections::HashMap,
-    convert::Infallible,
-    fmt::Display,
     io::{self, Write},
+    path::PathBuf,
 };
 
 use humansize::{format_size, DECIMAL};
-use reqwest::blocking::{Client, ClientBuilder};
+use reqwest::blocking::{multipart::Form, ClientBuilder};
 use rpassword::read_password;
-use serde::Deserialize;
+use serde::{de, Deserialize};
 use url::Url;
 
 mod util;
 
-use crate::{
-    backend::util::{bytes_to_gib, progress_render},
-    cli::TorrentSortingOptions,
-    RequestInfo,
-};
+use crate::{backend::util::progress_render, cli::TorrentSortingOptions, RequestInfo};
 
-use self::util::TorrentState;
+use self::util::{confirm, TorrentState};
 
-pub fn auth_with_ask(url: Url, username: String) -> Option<(Url, String)> {
+pub fn auth_interactive(
+    url: Url,
+    username: String,
+    password: Option<String>,
+) -> Option<(Url, String)> {
     let client = ClientBuilder::new().cookie_store(true).build().unwrap();
 
     print!("Please provide a password for user {}: ", username);
     io::stdout().flush().unwrap();
-    let password = read_password().unwrap();
+    let password = password.unwrap_or(read_password().unwrap());
 
     let mut map: HashMap<&str, &str> = HashMap::new();
     map.insert("username", &username);
@@ -114,4 +113,117 @@ pub fn list_torrents(
             false => "",
         }
     )
+}
+
+#[derive(Debug, Deserialize)]
+struct TorrentFileResponse {
+    index: u64,
+    name: String,
+    piece_range: [u32; 2],
+    progress: f64,
+    size: u64,
+}
+
+pub fn content_torrent(info: &RequestInfo, hash: String) {
+    let mut query: HashMap<&str, String> = HashMap::new();
+    query.insert("hash", hash);
+
+    let content_res = info
+        .client
+        .get(info.url.join("api/v2/torrents/files").unwrap())
+        .query(&query)
+        .send()
+        .unwrap();
+
+    let json: Vec<TorrentFileResponse> = content_res.json().expect("Content invalid JSON");
+
+    for file in &json {
+        println!("\n\n   | {}\n   |", file.name);
+        println!(
+            "   |  > Progress: {:.2}% {}",
+            file.progress * 100.0,
+            progress_render(file.progress)
+        );
+        println!("   |  > Size: {}", format_size(file.size, DECIMAL));
+    }
+
+    println!("\n\nTorrent contains {} files.", json.len());
+}
+
+pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
+    let form = Form::new();
+
+    if let Ok(url) = Url::parse(&url_or_path) {
+        let form = form.text("urls", url.to_string());
+        let form = form.text("paused", pause.to_string());
+
+        let file_res = info
+            .client
+            .post(info.url.join("api/v2/torrents/add").unwrap())
+            .multipart(form)
+            .send()
+            .unwrap();
+
+        if file_res.text().unwrap() == "Ok." {
+            println!("Added url.")
+        } else {
+            eprintln!("Adding url failed.")
+        }
+
+        return;
+    }
+
+    if let Ok(path) = PathBuf::try_from(&url_or_path) {
+        let form = form.file("torrents", path).unwrap();
+        let form = form.text("paused", pause.to_string());
+
+        let file_res = info
+            .client
+            .post(info.url.join("api/v2/torrents/add").unwrap())
+            .multipart(form)
+            .send()
+            .unwrap();
+
+        if file_res.text().unwrap() == "Ok." {
+            println!("Added torrent file.")
+        } else {
+            eprintln!("Adding torrent file failed.")
+        }
+
+        return;
+    }
+
+    eprintln!("Provided data was not a url or a path");
+}
+
+pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bool) {
+    let mut formdata: HashMap<&str, String> = HashMap::new();
+
+    formdata.insert("deleteFiles", delete_files.to_string());
+    formdata.insert("hashes", hashes.join("|"));
+
+    if !confirm(
+        &format!(
+            "You are about to delete {} torrent(s){}. Are you sure?",
+            hashes.len(),
+            match delete_files {
+                true => " AND THEIR FILES ON DISK",
+                false => "",
+            }
+        ),
+        util::DefaultChoice::No,
+    ) {
+        println!("Cancelled");
+        return;
+    }
+
+    // The response is empty no matter the result, so we might as well ignore it
+    let _delete_res = info
+        .client
+        .post(info.url.join("api/v2/torrents/delete").unwrap())
+        .form(&formdata)
+        .send()
+        .unwrap();
+
+    println!("Sent request to delete {} torrent(s).", hashes.len());
 }
