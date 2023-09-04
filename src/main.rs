@@ -33,7 +33,7 @@ const CONFIG_FILE: &'static str = "config.json";
 fn main() {
     let args = BaseCommand::parse();
     let dirs = get_dirs();
-    let mut config = load_config(&dirs);
+    let mut config = Config::from_file(&dirs);
 
     match args.commands {
         cli::Commands::Auth(args) => match args.commands {
@@ -106,7 +106,8 @@ fn main() {
             exit(0);
         }
     }
-    save_config(&dirs, &config);
+
+    config.save_config(&dirs);
 }
 
 pub struct RequestInfo {
@@ -181,26 +182,26 @@ impl Config {
             print!("\n")
         }
     }
-}
 
-fn save_config(dirs: &ProjectDirs, config: &Config) {
-    let json = serde_json::to_string_pretty(&config).unwrap();
-    let _ = write(dirs.config_dir().join(CONFIG_FILE), json).unwrap();
-}
-
-fn load_config(dirs: &ProjectDirs) -> Config {
-    let dir = dirs.config_dir();
-    if !dir.exists() {
-        let _ = create_dir(&dir).unwrap();
+    fn save_config(&self, dirs: &ProjectDirs) {
+        let json = serde_json::to_string_pretty(&self).unwrap();
+        let _ = write(dirs.config_dir().join(CONFIG_FILE), json).unwrap();
     }
 
-    let file = match File::open(&dir.join(CONFIG_FILE)) {
-        Ok(f) => f,
-        Err(_) => return Config::default(),
-    };
-    let cookies: Config = serde_json::from_reader(file).unwrap();
+    fn from_file(dirs: &ProjectDirs) -> Self {
+        let dir = dirs.config_dir();
+        if !dir.exists() {
+            let _ = create_dir(&dir).unwrap();
+        }
 
-    return cookies;
+        let file = match File::open(&dir.join(CONFIG_FILE)) {
+            Ok(f) => f,
+            Err(_) => return Config::default(),
+        };
+        let config: Config = serde_json::from_reader(file).unwrap();
+
+        return config;
+    }
 }
 
 fn get_dirs() -> ProjectDirs {
