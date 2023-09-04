@@ -39,13 +39,16 @@ fn main() {
             cli::AuthCommands::Add { url, username } => {
                 if let Some((url, cookie)) = auth_with_ask(url, username) {
                     println!("Authentication successful!");
+                    config.activate_url(&url);
                     config.cookies.insert(url, cookie);
                 } else {
                     eprintln!("Authentication failed!");
                     exit(1);
                 }
             }
-            cli::AuthCommands::Remove { url } => todo!(),
+            cli::AuthCommands::Remove { url } => {
+                config.remove_url(&url);
+            }
         },
         cli::Commands::Torrent(args) => {}
     }
@@ -53,6 +56,18 @@ fn main() {
 }
 
 impl Config {
+    fn remove_url(&mut self, url: &Url) {
+        if self.default == Some(url.clone()) {
+            self.default = None;
+        }
+
+        if let Some(_) = self.cookies.remove(&url) {
+            println!("Removed {}", &url)
+        } else {
+            println!("{} is not stored.", &url)
+        }
+    }
+
     fn activate_url(&mut self, url: &Url) {
         self.default = Some(url.clone());
     }
@@ -61,6 +76,10 @@ impl Config {
         if self.cookies.len() <= 0 {
             println!("No stored cookies!");
             return;
+        }
+
+        if !show_secrets {
+            println!("NOTE: secrets are redacted. To reveal, pass --show-secrets\n")
         }
 
         println!("DEFAULT\tURL\tCOOKIE");
@@ -82,7 +101,7 @@ impl Config {
 }
 
 fn save_config(dirs: &ProjectDirs, config: &Config) {
-    let json = serde_json::to_string(&config).unwrap();
+    let json = serde_json::to_string_pretty(&config).unwrap();
     let _ = write(dirs.config_dir().join(CONFIG_FILE), json).unwrap();
 }
 
