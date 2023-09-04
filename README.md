@@ -1,2 +1,2 @@
 # qbtrs
-A qbittorrent cli program focused on ease of use and simplicity
+A qbittorrent cli client focused on ease of use and simplicity
