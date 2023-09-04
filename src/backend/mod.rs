@@ -106,8 +106,12 @@ pub fn list_torrents(
     }
 
     println!(
-        "Found {} torrents, sorted by: {}",
+        "Found {} torrents, sorted by: {} {}",
         torrents.len(),
-        sort_string
+        sort_string,
+        match reverse {
+            true => "(reversed)",
+            false => "",
+        }
     )
 }
