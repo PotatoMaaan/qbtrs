@@ -62,14 +62,29 @@ struct TorrentInfoResponse {
     state: TorrentState,
 }
 
-pub fn list_torrents(info: &RequestInfo, sort_by: TorrentSortingOptions) {
-    let sort_string = format!("{:?}", sort_by);
-    println!("{}", sort_string);
+pub fn list_torrents(
+    info: &RequestInfo,
+    sort_by: TorrentSortingOptions,
+    reverse: bool,
+    limit: Option<u32>,
+) {
+    let sort_string = format!("{:?}", sort_by).to_ascii_lowercase();
+
+    let mut query: HashMap<&str, String> = HashMap::new();
+    query.insert("sort", sort_string.clone());
+
+    if reverse {
+        query.insert("reverse", "true".to_string());
+    }
+
+    if let Some(limit) = limit {
+        query.insert("limit", limit.to_string());
+    }
 
     let info_res = info
         .client
         .get(info.url.join("api/v2/torrents/info").unwrap())
-        .query(&[("sort", "name")])
+        .query(&query)
         .send()
         .unwrap();
 
@@ -89,4 +104,10 @@ pub fn list_torrents(info: &RequestInfo, sort_by: TorrentSortingOptions) {
 
         println!("\n")
     }
+
+    println!(
+        "Found {} torrents, sorted by: {}",
+        torrents.len(),
+        sort_string
+    )
 }

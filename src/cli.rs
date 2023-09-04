@@ -45,8 +45,23 @@ pub struct Torrent {
 #[derive(Subcommand, Clone, Debug)]
 pub enum TorrentCommands {
     List {
+        /// Sort the torrents by this value
         #[arg(short, long)]
-        sort_by: Option<TorrentSortingOptions>,
+        sort: Option<TorrentSortingOptions>,
+
+        /// Reverse the display order
+        #[arg(short, long)]
+        reverse: bool,
+
+        /// Limit the number of displayed torrents
+        #[arg(short, long)]
+        limit: Option<u32>,
+    },
+    Status {
+        id: String,
+    },
+    Content {
+        id: String,
     },
     Add {
         url_or_file: String,
