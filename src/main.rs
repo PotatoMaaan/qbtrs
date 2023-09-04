@@ -63,8 +63,8 @@ fn main() {
             let info = config.get_jar_and_client();
 
             match args.commands {
-                cli::TorrentCommands::List { verbose } => {
-                    list_torrents(&info, verbose);
+                cli::TorrentCommands::List { sort_by } => {
+                    list_torrents(&info, sort_by.unwrap_or(cli::TorrentSortingOptions::Name));
                 }
                 cli::TorrentCommands::Add { url_or_file } => todo!(),
                 cli::TorrentCommands::Remove { id } => todo!(),

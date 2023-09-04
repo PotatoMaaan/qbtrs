@@ -1,4 +1,4 @@
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use url::Url;
 
 #[derive(Debug, Clone, Parser)]
@@ -46,7 +46,7 @@ pub struct Torrent {
 pub enum TorrentCommands {
     List {
         #[arg(short, long)]
-        verbose: bool,
+        sort_by: Option<TorrentSortingOptions>,
     },
     Add {
         url_or_file: String,
@@ -60,4 +60,14 @@ pub enum TorrentCommands {
     Resume {
         id: String,
     },
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum TorrentSortingOptions {
+    Name,
+    Hash,
+    Progress,
+    Size,
+    Ratio,
+    State,
 }

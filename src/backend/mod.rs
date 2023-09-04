@@ -15,6 +15,7 @@ mod util;
 
 use crate::{
     backend::util::{bytes_to_gib, progress_render},
+    cli::TorrentSortingOptions,
     RequestInfo,
 };
 
@@ -61,7 +62,10 @@ struct TorrentInfoResponse {
     state: TorrentState,
 }
 
-pub fn list_torrents(info: &RequestInfo, verbose: bool) {
+pub fn list_torrents(info: &RequestInfo, sort_by: TorrentSortingOptions) {
+    let sort_string = format!("{:?}", sort_by);
+    println!("{}", sort_string);
+
     let info_res = info
         .client
         .get(info.url.join("api/v2/torrents/info").unwrap())
