@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{create_dir_all, write, File},
+    fs::{create_dir_all, read_to_string, write},
     process::exit,
     sync::Arc,
 };
@@ -28,7 +28,9 @@ pub struct Config {
     pub default: Option<Url>,
 }
 
-const CONFIG_FILE: &'static str = "config.json";
+const CONFIG_FILE: &'static str = "config.toml";
+const CONFIG_COMMENT: &'static str =
+    "#This is the configuration file for qbtrs, a cli qbittorrent client.\n#If manually modifying this file, make sure that the default value (if not null) always has a corresponding entry in the cookies list.\n\n";
 
 fn main() {
     let args = BaseCommand::parse();
@@ -189,8 +191,12 @@ impl Config {
     }
 
     fn save_config(&self, dirs: &ProjectDirs) {
-        let json = serde_json::to_string_pretty(&self).unwrap();
-        let _ = write(dirs.config_dir().join(CONFIG_FILE), json).unwrap();
+        let path = dirs.config_dir().join(CONFIG_FILE);
+
+        let mut toml = toml::to_string_pretty(&self).unwrap();
+        toml = CONFIG_COMMENT.to_string() + &toml;
+
+        let _ = write(path, toml).unwrap();
     }
 
     fn from_file(dirs: &ProjectDirs) -> Self {
@@ -199,11 +205,11 @@ impl Config {
             let _ = create_dir_all(&dir).expect("Failed creating config dir");
         }
 
-        let file = match File::open(&dir.join(CONFIG_FILE)) {
+        let file = match read_to_string(&dir.join(CONFIG_FILE)) {
             Ok(f) => f,
             Err(_) => return Config::default(),
         };
-        let config: Config = serde_json::from_reader(file).unwrap();
+        let config: Config = toml::from_str(&file).unwrap();
 
         return config;
     }

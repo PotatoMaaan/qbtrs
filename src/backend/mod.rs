@@ -31,7 +31,7 @@ pub fn auth_interactive(
     if let Some(pw) = provided_password {
         password = pw;
     } else {
-        print!("Please provide a password for user {}: ", username);
+        print!("Please provide the password for user {}: ", username);
         io::stdout().flush().unwrap();
         password = read_password().unwrap();
     }
