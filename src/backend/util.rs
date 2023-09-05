@@ -112,13 +112,7 @@ pub fn confirm(text: &str, default: DefaultChoice) -> bool {
     );
     io::stdout().flush().unwrap();
 
-    let line = io::stdin()
-        .lock()
-        .lines()
-        .next()
-        .unwrap()
-        .unwrap()
-        .to_ascii_lowercase();
+    let line = readline().to_ascii_lowercase();
 
     match line.as_str() {
         "" => match default {
@@ -129,4 +123,8 @@ pub fn confirm(text: &str, default: DefaultChoice) -> bool {
         "n" => false,
         _ => false,
     }
+}
+
+fn readline() -> String {
+    io::stdin().lock().lines().next().unwrap().unwrap()
 }
