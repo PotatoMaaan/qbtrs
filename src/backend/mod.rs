@@ -12,7 +12,11 @@ use url::Url;
 
 mod util;
 
-use crate::{backend::util::progress_render, cli::TorrentSortingOptions, RequestInfo};
+use crate::{
+    backend::util::{exit_if_expired, progress_render},
+    cli::TorrentSortingOptions,
+    RequestInfo,
+};
 
 use self::util::{confirm, TorrentState};
 
@@ -92,6 +96,8 @@ pub fn list_torrents(
         .send()
         .unwrap();
 
+    exit_if_expired(&info_res);
+
     let torrents: Vec<TorrentInfoResponse> = info_res.json().unwrap();
 
     println!("\n");
@@ -141,6 +147,7 @@ pub fn content_torrent(info: &RequestInfo, hash: String) -> Option<()> {
         .query(&query)
         .send()
         .unwrap();
+    exit_if_expired(&content_res);
 
     let json: Vec<TorrentFileResponse> = match content_res.json() {
         Ok(v) => v,
@@ -175,6 +182,7 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
             .multipart(form)
             .send()
             .unwrap();
+        exit_if_expired(&file_res);
 
         if file_res.text().unwrap() == "Ok." {
             println!("Added url.")
@@ -205,6 +213,7 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
             .multipart(form)
             .send()
             .unwrap();
+        exit_if_expired(&file_res);
 
         if file_res.text().unwrap() == "Ok." {
             println!("Added torrent file.")
@@ -239,13 +248,13 @@ pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bo
         return;
     }
 
-    // The response is empty no matter the result, so we might as well ignore it
-    let _delete_res = info
+    let delete_res = info
         .client
         .post(info.url.join("api/v2/torrents/delete").unwrap())
         .form(&formdata)
         .send()
         .unwrap();
+    exit_if_expired(&delete_res);
 
     println!("Sent request to delete {} torrent(s).", hashes.len());
 }
@@ -255,13 +264,13 @@ pub fn pause_torrent(info: &RequestInfo, hash: String) {
 
     formdata.insert("hashes", hash);
 
-    // Again, the response is completely empty.....
-    let _pause_res = info
+    let pause_res = info
         .client
         .post(info.url.join("api/v2/torrents/pause").unwrap())
         .form(&formdata)
         .send()
         .unwrap();
+    exit_if_expired(&pause_res);
 
     println!("Sent request to pause torrent.");
 }
@@ -272,12 +281,13 @@ pub fn resume_torrent(info: &RequestInfo, hash: String) {
     formdata.insert("hashes", hash);
 
     // And again, the response is completely empty yet again....
-    let _pause_res = info
+    let resume_res = info
         .client
         .post(info.url.join("api/v2/torrents/resume").unwrap())
         .form(&formdata)
         .send()
         .unwrap();
+    exit_if_expired(&resume_res);
 
     println!("Sent request to resume torrent.");
 }

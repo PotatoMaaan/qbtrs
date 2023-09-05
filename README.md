@@ -51,3 +51,4 @@ cargo build --release
 ## Some notes
 
 - I have not tested this on windows and macOS, I would expect it to work there as well
+- All commannds are documented in the `--help` option.

@@ -1,5 +1,9 @@
-use std::io::{self, BufRead, Write};
+use std::{
+    io::{self, BufRead, Write},
+    process::exit,
+};
 
+use reqwest::blocking::Response;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -125,6 +129,13 @@ pub fn confirm(text: &str, default: DefaultChoice) -> bool {
     }
 }
 
-fn readline() -> String {
+pub fn readline() -> String {
     io::stdin().lock().lines().next().unwrap().unwrap()
+}
+
+pub fn exit_if_expired(res: &Response) {
+    if res.status() == 403 {
+        eprintln!("Your cookie is expired. Run the auth add command again to renew it.");
+        exit(1);
+    }
 }

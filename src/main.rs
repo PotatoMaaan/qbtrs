@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{create_dir, write, File},
+    fs::{create_dir_all, write, File},
     process::exit,
     sync::Arc,
 };
@@ -196,7 +196,7 @@ impl Config {
     fn from_file(dirs: &ProjectDirs) -> Self {
         let dir = dirs.config_dir();
         if !dir.exists() {
-            let _ = create_dir(&dir).unwrap();
+            let _ = create_dir_all(&dir).expect("Failed creating config dir");
         }
 
         let file = match File::open(&dir.join(CONFIG_FILE)) {
