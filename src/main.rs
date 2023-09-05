@@ -40,8 +40,15 @@ fn main() {
     match args.commands {
         cli::Commands::Auth(args) => match args.commands {
             cli::AuthCommands::SetDefault { url } => {
-                config.activate_url(&url);
-                println!("Set {} as the default", url)
+                if config.cookies.contains_key(&url) {
+                    config.activate_url(&url);
+                    println!("Set {} as the default", url)
+                } else {
+                    eprintln!(
+                        "Url {} is not registered. Use add subcommand to add it.",
+                        &url
+                    );
+                }
             }
             cli::AuthCommands::List { show_secrets } => {
                 config.list_cookies(show_secrets);

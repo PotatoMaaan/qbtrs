@@ -54,3 +54,4 @@ cargo build --release
 
 - ~~I have not tested this on windows and macOS, I would expect it to work there as well~~ **Tested on windows, no idea about macOS**
 - All commannds are documented in the `--help` option.
+- The code is full of unwraps right now, but im not really sure that implementing "proper" erorr handling would make any meaningful difference to the user 
