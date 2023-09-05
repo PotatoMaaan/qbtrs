@@ -810,7 +810,6 @@ dependencies = [
  "reqwest",
  "rpassword",
  "serde",
- "serde_json",
  "toml",
  "url",
 ]
