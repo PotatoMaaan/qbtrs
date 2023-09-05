@@ -39,6 +39,7 @@ fn main() {
         cli::Commands::Auth(args) => match args.commands {
             cli::AuthCommands::SetDefault { url } => {
                 config.activate_url(&url);
+                println!("Set {} as the default", url)
             }
             cli::AuthCommands::List { show_secrets } => {
                 config.list_cookies(show_secrets);
@@ -98,7 +99,11 @@ fn main() {
                 }
                 cli::TorrentCommands::Pause { hash } => pause_torrent(&info, hash),
                 cli::TorrentCommands::Resume { hash } => resume_torrent(&info, hash),
-                cli::TorrentCommands::Content { hash } => content_torrent(&info, hash),
+                cli::TorrentCommands::Content { hash } => {
+                    if content_torrent(&info, hash).is_none() {
+                        eprintln!("Request failed, make sure the hash is valid");
+                    }
+                }
             }
         }
         cli::Commands::ConfigDir => {

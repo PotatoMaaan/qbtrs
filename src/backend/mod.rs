@@ -19,13 +19,18 @@ use self::util::{confirm, TorrentState};
 pub fn auth_interactive(
     url: Url,
     username: String,
-    password: Option<String>,
+    provided_password: Option<String>,
 ) -> Option<(Url, String)> {
     let client = ClientBuilder::new().cookie_store(true).build().unwrap();
 
-    print!("Please provide a password for user {}: ", username);
-    io::stdout().flush().unwrap();
-    let password = password.unwrap_or(read_password().unwrap());
+    let password;
+    if let Some(pw) = provided_password {
+        password = pw;
+    } else {
+        print!("Please provide a password for user {}: ", username);
+        io::stdout().flush().unwrap();
+        password = read_password().unwrap();
+    }
 
     let mut map: HashMap<&str, &str> = HashMap::new();
     map.insert("username", &username);
@@ -89,6 +94,7 @@ pub fn list_torrents(
 
     let torrents: Vec<TorrentInfoResponse> = info_res.json().unwrap();
 
+    println!("\n");
     for t in &torrents {
         println!("   | {}\n   |", t.name);
         println!("   |  > Hash: {}", t.hash);
@@ -125,7 +131,7 @@ struct TorrentFileResponse {
     size: u64,
 }
 
-pub fn content_torrent(info: &RequestInfo, hash: String) {
+pub fn content_torrent(info: &RequestInfo, hash: String) -> Option<()> {
     let mut query: HashMap<&str, String> = HashMap::new();
     query.insert("hash", hash);
 
@@ -136,7 +142,10 @@ pub fn content_torrent(info: &RequestInfo, hash: String) {
         .send()
         .unwrap();
 
-    let json: Vec<TorrentFileResponse> = content_res.json().expect("Content invalid JSON");
+    let json: Vec<TorrentFileResponse> = match content_res.json() {
+        Ok(v) => v,
+        Err(_) => return None,
+    };
 
     for file in &json {
         println!("\n\n   | {}\n   |", file.name);
@@ -149,6 +158,8 @@ pub fn content_torrent(info: &RequestInfo, hash: String) {
     }
 
     println!("\n\nTorrent contains {} files.", json.len());
+
+    Some(())
 }
 
 pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
@@ -175,7 +186,17 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
     }
 
     if let Ok(path) = PathBuf::try_from(&url_or_path) {
-        let form = form.file("torrents", path).unwrap();
+        let form = match form.file("torrents", &path) {
+            Ok(v) => v,
+            Err(e) => {
+                eprintln!(
+                    "Failed reading file '{}': {}",
+                    &path.display(),
+                    e.to_string()
+                );
+                return;
+            }
+        };
         let form = form.text("paused", pause.to_string());
 
         let file_res = info
@@ -194,7 +215,7 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
         return;
     }
 
-    eprintln!("Provided data was not a url or a path");
+    eprintln!("Provided data was not a valid url or a path");
 }
 
 pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bool) {
