@@ -2,6 +2,7 @@ use clap::{Args, Parser, Subcommand, ValueEnum};
 use url::Url;
 
 #[derive(Debug, Clone, Parser)]
+#[command(version, about)]
 pub struct BaseCommand {
     #[command(subcommand)]
     pub commands: Commands,
