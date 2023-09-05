@@ -4,7 +4,7 @@ A qbittorrent cli client focused on ease of use and simplicity
 
 ## Getting started
 
-First, either compile the program yourself or aquire a binary release.
+First, either [compile the program yourself](#building) or aquire a binary release.
 
 ### Adding a url
 
@@ -35,3 +35,19 @@ qbtrs torrent add path/to/torrent.torrent
 ```
 
 > NOTE: When passing a magnet link, pass it in quotes to avoid the shell messing with it.
+
+## Building
+
+Building qbtrs is very simple. You just need a rust toolchain installed, which you can get from [rustup.rs](https://rustup.rs/)
+
+After that, clone the repo and run `cargo build --release`
+
+```
+git clone https://github.com/PotatoMaaan/qbtrs.git
+cd qbtrs
+cargo build --release
+```
+
+## Some notes
+
+- I have not tested this on windows and macOS, I would expect it to work there as well
