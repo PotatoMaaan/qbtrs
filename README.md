@@ -1,6 +1,8 @@
 # qbtrs
 
-A qbittorrent cli client focused on ease of use and simplicity
+A qbittorrent cli client focused on ease of use and simplicity.
+
+Currently, qbtrs only supports managing torrents, not other things like categories or tags.
 
 ## Getting started
 
