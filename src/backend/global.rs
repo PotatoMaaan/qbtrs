@@ -52,10 +52,10 @@ pub fn logs(info: &RequestInfo) {
 
     for log in &logs {
         let level = match log.r#type {
-            1 => "NORMAL",
+            1 => "NORM",
             2 => "INFO",
-            4 => "WARNING",
-            8 => "CRITICAL",
+            4 => "WARN",
+            8 => "CRIT",
             _ => "UNKNOWN",
         };
 
