@@ -89,13 +89,13 @@ pub fn progress_render(progress: f64) -> String {
     let mut s = "<".to_string();
 
     for _ in 0..progress {
-        s.push_str("#");
+        s.push('#');
     }
 
     for _ in progress..10 {
-        s.push_str("_");
+        s.push('_');
     }
-    s.push_str(">");
+    s.push('>');
 
     return s;
 }

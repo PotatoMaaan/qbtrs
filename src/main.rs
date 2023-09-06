@@ -1,3 +1,5 @@
+#![allow(clippy::needless_return)]
+#![allow(clippy::needless_borrow)]
 use std::{
     collections::HashMap,
     fs::{create_dir_all, read_to_string, write},
@@ -30,8 +32,8 @@ pub struct Config {
     pub default: Option<Url>,
 }
 
-const CONFIG_FILE: &'static str = "config.toml";
-const CONFIG_COMMENT: &'static str =
+const CONFIG_FILE: &str = "config.toml";
+const CONFIG_COMMENT: &str =
     "#This is the configuration file for qbtrs, a cli qbittorrent client.\n#If manually modifying this file, make sure that the default value (if not null) always has a corresponding entry in the cookies list.\n\n";
 
 fn main() {
@@ -75,7 +77,7 @@ fn main() {
             cli::AuthCommands::Logout { url } => logout(&url),
         },
         cli::Commands::Torrent(args) => {
-            if config.default.is_none() || config.cookies.len() <= 0 {
+            if config.default.is_none() || config.cookies.is_empty() {
                 eprintln!("No (default) url configured. Please configure a url using the auth subcommand!");
                 exit(1);
             }
@@ -104,7 +106,7 @@ fn main() {
                     hashes,
                     delete_files,
                 } => {
-                    if hashes.len() < 1 {
+                    if hashes.is_empty() {
                         eprintln!("At least one hash must be provided!");
                         exit(1);
                     }
@@ -127,7 +129,7 @@ fn main() {
             exit(0);
         }
         cli::Commands::Global(args) => {
-            if config.default.is_none() || config.cookies.len() <= 0 {
+            if config.default.is_none() || config.cookies.is_empty() {
                 eprintln!("No (default) url configured. Please configure a url using the auth subcommand!");
                 exit(1);
             }
@@ -190,7 +192,7 @@ impl Config {
             self.default = None;
         }
 
-        if let Some(_) = self.cookies.remove(&url) {
+        if self.cookies.remove(&url).is_some() {
             println!("Removed {}", &url)
         } else {
             println!("{} is not stored.", &url)
@@ -202,7 +204,7 @@ impl Config {
     }
 
     fn list_cookies(&self, show_secrets: bool) {
-        if self.cookies.len() <= 0 {
+        if self.cookies.is_empty() {
             println!("No stored cookies!");
             return;
         }
@@ -224,7 +226,7 @@ impl Config {
             } else {
                 print!("[REDACTED]")
             }
-            print!("\n")
+            println!("")
         }
     }
 
@@ -234,13 +236,13 @@ impl Config {
         let mut toml = toml::to_string_pretty(&self).unwrap();
         toml = CONFIG_COMMENT.to_string() + &toml;
 
-        let _ = write(path, toml).unwrap();
+        write(path, toml).unwrap();
     }
 
     fn from_file(dirs: &ProjectDirs) -> Self {
         let dir = dirs.config_dir();
         if !dir.exists() {
-            let _ = create_dir_all(&dir).expect("Failed creating config dir");
+            create_dir_all(&dir).expect("Failed creating config dir");
         }
 
         let file = match read_to_string(&dir.join(CONFIG_FILE)) {

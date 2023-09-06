@@ -38,7 +38,7 @@ pub fn auth_interactive(
     exit_if_expired(&login_res);
 
     let cookies: Vec<_> = login_res.cookies().collect();
-    if cookies.len() < 1 {
+    if cookies.is_empty() {
         return None;
     }
 
