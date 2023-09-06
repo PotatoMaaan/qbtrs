@@ -14,6 +14,7 @@ pub enum Commands {
     ConfigDir,
     Auth(Auth),
     Torrent(Torrent),
+    Global(Global),
 }
 
 /// Control authentication for different urls
@@ -48,6 +49,33 @@ pub enum AuthCommands {
     },
     /// Removes the given url
     Remove { url: Url },
+    /// Log out of the provided url
+    Logout { url: Url },
+}
+
+/// Controls global settings etc. for the qbittorrent app
+#[derive(Debug, Clone, Args)]
+pub struct Global {
+    #[command(subcommand)]
+    pub commands: GlobalCommands,
+}
+
+#[derive(Subcommand, Clone, Debug)]
+pub enum GlobalCommands {
+    /// Shuts down the app
+    Shutdown,
+
+    /// Displays the version the app is running
+    Version,
+
+    /// Displays the logs
+    Log,
+
+    /// Displays or toggles alternative speed limits
+    AltSpeed {
+        #[arg(short, long)]
+        toggle: bool,
+    },
 }
 
 /// Control torrents with actions such as add, pause, etc.
@@ -72,6 +100,10 @@ pub enum TorrentCommands {
         /// Limit the number of displayed torrents
         #[arg(short, long)]
         limit: Option<u32>,
+
+        /// Refresh the screen every X milliseconds
+        #[arg(short, long)]
+        interval: Option<u64>,
     },
     /// Show the contents of a specific torrent
     Content {
@@ -106,6 +138,10 @@ pub enum TorrentCommands {
         /// The hash of the torrent
         hash: String,
     },
+    /// Forces the recheck of a torrent
+    Recheck { hash: String },
+    /// Forces the reannounce of a torrent
+    Reannounce { hash: String },
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]

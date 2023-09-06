@@ -6,8 +6,8 @@ use std::{
 };
 
 use backend::{
-    add_torrent, auth_interactive, content_torrent, delete_torrents, list_torrents, pause_torrent,
-    resume_torrent,
+    add_torrent, auth_interactive, content_torrent, delete_torrents, list_torrents, logout, logs,
+    pause_torrent, reannounce, recheck, resume_torrent, shutdown, toggle_alt_speed, version,
 };
 use clap::Parser;
 use cli::BaseCommand;
@@ -18,6 +18,8 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
+
+use crate::backend::get_alt_speed;
 
 mod backend;
 mod cli;
@@ -70,6 +72,7 @@ fn main() {
             cli::AuthCommands::Remove { url } => {
                 config.remove_url(&url);
             }
+            cli::AuthCommands::Logout { url } => logout(&url),
         },
         cli::Commands::Torrent(args) => {
             if config.default.is_none() || config.cookies.len() <= 0 {
@@ -84,12 +87,14 @@ fn main() {
                     sort,
                     reverse,
                     limit,
+                    interval,
                 } => {
                     list_torrents(
                         &info,
                         sort.unwrap_or(cli::TorrentSortingOptions::Name),
                         reverse,
                         limit,
+                        interval,
                     );
                 }
                 cli::TorrentCommands::Add { url_or_path, pause } => {
@@ -113,11 +118,37 @@ fn main() {
                         eprintln!("Request failed, make sure the hash is valid");
                     }
                 }
+                cli::TorrentCommands::Recheck { hash } => recheck(&info, hash),
+                cli::TorrentCommands::Reannounce { hash } => reannounce(&info, hash),
             }
         }
         cli::Commands::ConfigDir => {
             println!("Config dir at: {}", dirs.config_dir().display());
             exit(0);
+        }
+        cli::Commands::Global(args) => {
+            if config.default.is_none() || config.cookies.len() <= 0 {
+                eprintln!("No (default) url configured. Please configure a url using the auth subcommand!");
+                exit(1);
+            }
+
+            let info = config.get_request_info();
+
+            match args.commands {
+                cli::GlobalCommands::Shutdown => shutdown(&info),
+                cli::GlobalCommands::Version => version(&info),
+                cli::GlobalCommands::Log => logs(&info),
+                cli::GlobalCommands::AltSpeed { toggle } => {
+                    if toggle {
+                        toggle_alt_speed(&info);
+                    } else {
+                        println!(
+                            "Alternative speed limits are currently: {}",
+                            get_alt_speed(&info)
+                        )
+                    }
+                }
+            }
         }
     }
 
