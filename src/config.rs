@@ -22,6 +22,7 @@ pub struct Config {
     pub default: Option<Url>,
 }
 
+#[derive(Debug)]
 pub struct RequestInfo {
     pub jar: Arc<Jar>,
     pub client: Client,
@@ -91,7 +92,7 @@ impl Config {
             } else {
                 print!("[REDACTED]")
             }
-            println!("")
+            println!()
         }
     }
 

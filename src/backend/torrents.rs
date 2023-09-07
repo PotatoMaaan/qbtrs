@@ -179,11 +179,7 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
         let form = match form.file("torrents", &path) {
             Ok(v) => v,
             Err(e) => {
-                eprintln!(
-                    "Failed reading file '{}': {}",
-                    &path.display(),
-                    e.to_string()
-                );
+                eprintln!("Failed reading file '{}': {}", &path.display(), e);
                 return;
             }
         };
