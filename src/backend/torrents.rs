@@ -9,7 +9,7 @@ use url::Url;
 use crate::{
     backend::util::{self, confirm, exit_if_expired, progress_render},
     cli::TorrentSortingOptions,
-    RequestInfo,
+    config::RequestInfo,
 };
 
 use super::util::TorrentState;
