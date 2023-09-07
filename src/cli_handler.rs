@@ -83,7 +83,7 @@ pub fn handle_cli(args: BaseCommand, dirs: &ProjectDirs, config: &mut Config) {
                 cli::TorrentCommands::Pause { hash } => pause_torrent(&info, hash),
                 cli::TorrentCommands::Resume { hash } => resume_torrent(&info, hash),
                 cli::TorrentCommands::Content { hash } => {
-                    if content_torrent(&info, hash).is_none() {
+                    if torrent_content(&info, hash).is_none() {
                         eprintln!("Request failed, make sure the hash is valid");
                     }
                 }

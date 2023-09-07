@@ -119,7 +119,7 @@ struct TorrentFileResponse {
     size: u64,
 }
 
-pub fn content_torrent(info: &RequestInfo, hash: String) -> Option<()> {
+pub fn torrent_content(info: &RequestInfo, hash: String) -> Option<()> {
     let mut query: HashMap<&str, String> = HashMap::new();
     query.insert("hash", hash);
 
