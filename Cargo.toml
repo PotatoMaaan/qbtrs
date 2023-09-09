@@ -10,13 +10,7 @@ chrono = "0.4.29"
 clap = { version = "4.4.2", features = ["string", "derive"] }
 directories = "5.0.1"
 humansize = "2.1.3"
-reqwest = { version = "0.11.20", features = [
-    "blocking",
-    "cookies",
-    "serde_json",
-    "json",
-    "multipart",
-] }
+reqwest = { version = "0.11.20", features = ["blocking", "cookies", "serde_json", "json", "multipart", "rustls"], default-features = false }
 rpassword = "7.2.0"
 serde = { version = "1.0.188", features = ["derive"] }
 toml = "0.7.6"
