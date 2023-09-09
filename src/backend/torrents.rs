@@ -9,7 +9,7 @@ use url::Url;
 use crate::{
     backend::util::{self, confirm, exit_if_expired, progress_render},
     cli::TorrentSortingOptions,
-    RequestInfo,
+    config::RequestInfo,
 };
 
 use super::util::TorrentState;
@@ -119,7 +119,7 @@ struct TorrentFileResponse {
     size: u64,
 }
 
-pub fn content_torrent(info: &RequestInfo, hash: String) -> Option<()> {
+pub fn torrent_content(info: &RequestInfo, hash: String) -> Option<()> {
     let mut query: HashMap<&str, String> = HashMap::new();
     query.insert("hash", hash);
 
@@ -179,11 +179,7 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
         let form = match form.file("torrents", &path) {
             Ok(v) => v,
             Err(e) => {
-                eprintln!(
-                    "Failed reading file '{}': {}",
-                    &path.display(),
-                    e.to_string()
-                );
+                eprintln!("Failed reading file '{}': {}", &path.display(), e);
                 return;
             }
         };

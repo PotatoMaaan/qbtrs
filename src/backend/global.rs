@@ -1,7 +1,7 @@
 use chrono::NaiveDateTime;
 use serde::Deserialize;
 
-use crate::RequestInfo;
+use crate::config::RequestInfo;
 
 use super::util::exit_if_expired;
 
