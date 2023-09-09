@@ -23,34 +23,36 @@ pub struct Config {
 }
 
 #[derive(Debug)]
-pub struct RequestInfo {
+pub struct RequestInfo<'a> {
     pub jar: Arc<Jar>,
     pub client: Client,
-    pub url: Url,
+    pub url: &'a Url,
 }
 
 impl Config {
     pub fn get_request_info(&self) -> RequestInfo {
-        let url = &self.default.clone().unwrap();
+        if let Some(url) = &self.default {
+            let cookie = self
+                .cookies
+                .get(url)
+                .expect("Invalid default value")
+                .to_owned();
 
-        let cookie = self
-            .cookies
-            .get(url)
-            .expect("Invalid default value")
-            .to_owned();
+            let jar = Arc::new(Jar::default());
+            jar.add_cookie_str(&cookie, &url);
+            let client = ClientBuilder::new()
+                .cookie_provider(jar.clone())
+                .build()
+                .unwrap();
 
-        let jar = Arc::new(Jar::default());
-        jar.add_cookie_str(&cookie, url);
-        let client = ClientBuilder::new()
-            .cookie_provider(jar.clone())
-            .build()
-            .unwrap();
-
-        return RequestInfo {
-            jar,
-            client,
-            url: url.clone(),
-        };
+            return RequestInfo {
+                jar,
+                client,
+                url: &url,
+            };
+        } else {
+            panic!("No Default value!");
+        }
     }
 
     pub fn remove_url(&mut self, url: &Url) {

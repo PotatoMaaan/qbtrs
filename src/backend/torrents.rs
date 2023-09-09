@@ -47,16 +47,16 @@ pub fn list_torrents(
 
     let mut refresh_counter = 0;
     loop {
-        let info_res = info
+        let res = info
             .client
             .get(info.url.join("api/v2/torrents/info").unwrap())
             .query(&query)
             .send()
             .unwrap();
 
-        exit_if_expired(&info_res);
+        exit_if_expired(&res);
 
-        let torrents: Vec<TorrentInfoResponse> = info_res.json().unwrap();
+        let torrents: Vec<TorrentInfoResponse> = res.json().unwrap();
 
         println!("\n");
         for t in &torrents {
@@ -194,9 +194,9 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
         exit_if_expired(&file_res);
 
         if file_res.text().unwrap() == "Ok." {
-            println!("Added torrent file.")
+            println!("Added torrent file.");
         } else {
-            eprintln!("Adding torrent file failed.")
+            eprintln!("Adding torrent file failed.");
         }
 
         return;
