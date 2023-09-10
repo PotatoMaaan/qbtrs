@@ -1,7 +1,6 @@
-use chrono::NaiveDateTime;
 use serde::Deserialize;
 
-use crate::config::RequestInfo;
+use crate::{backend::util::epoch_to_datetime, config::RequestInfo};
 
 use super::util::exit_if_expired;
 
@@ -59,7 +58,7 @@ pub fn logs(info: &RequestInfo) {
             _ => "UNKNOWN",
         };
 
-        let time = NaiveDateTime::from_timestamp_opt(log.timestamp, 0).unwrap();
+        let time = epoch_to_datetime(log.timestamp);
 
         println!("{}\t{}\t{}\t{}", log.id, level, time, log.message);
     }

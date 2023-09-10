@@ -3,6 +3,7 @@ use std::{
     process::exit,
 };
 
+use chrono::NaiveDateTime;
 use reqwest::blocking::Response;
 use serde::Deserialize;
 
@@ -138,4 +139,8 @@ pub fn exit_if_expired(res: &Response) {
         eprintln!("Your cookie is expired. Run the auth add command again to renew it.");
         exit(1);
     }
+}
+
+pub fn epoch_to_datetime(epoch: i64) -> NaiveDateTime {
+    NaiveDateTime::from_timestamp_opt(epoch, 0).unwrap()
 }

@@ -1,13 +1,12 @@
 use std::{collections::HashMap, path::PathBuf, thread, time::Duration};
 
-use chrono::NaiveDateTime;
 use humansize::{format_size, DECIMAL};
 use reqwest::blocking::multipart::Form;
 use serde::Deserialize;
 use url::Url;
 
 use crate::{
-    backend::util::{self, confirm, exit_if_expired, progress_render},
+    backend::util::{self, confirm, epoch_to_datetime, exit_if_expired, progress_render},
     cli::TorrentSortingOptions,
     config::RequestInfo,
 };
@@ -60,7 +59,7 @@ pub fn list_torrents(
 
         println!("\n");
         for t in &torrents {
-            let added_on = NaiveDateTime::from_timestamp_opt(t.added_on, 0).unwrap();
+            let added_on = epoch_to_datetime(t.added_on);
 
             println!("   | {}\n   |", t.name);
             println!("   |  > Hash: {}", t.hash);
