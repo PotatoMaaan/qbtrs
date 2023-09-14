@@ -25,9 +25,10 @@ pub fn auth_interactive(
         password = read_password().unwrap();
     }
 
-    let mut map: HashMap<&str, &str> = HashMap::new();
-    map.insert("username", &username);
-    map.insert("password", &password);
+    let map: HashMap<&str, &str> = HashMap::from([
+        ("username", username.as_str()),
+        ("password", password.as_str()),
+    ]);
 
     let login_res = client
         .post(url.join("api/v2/auth/login").unwrap().to_string())

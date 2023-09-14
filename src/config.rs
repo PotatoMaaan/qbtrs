@@ -68,6 +68,10 @@ impl Config {
     }
 
     pub fn activate_url(&mut self, url: &Url) {
+        if self.cookies.get(&url).is_none() {
+            println!("{} is not stored", &url);
+            return;
+        }
         self.default = Some(url.clone());
     }
 
