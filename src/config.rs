@@ -24,13 +24,12 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct RequestInfo<'a> {
-    pub jar: Arc<Jar>,
     pub client: Client,
     pub url: &'a Url,
 }
 
 impl Config {
-    pub fn get_request_info(&self) -> RequestInfo {
+    pub fn get_request_info(&self) -> RequestInfo<'_> {
         if let Some(url) = &self.default {
             let cookie = self
                 .cookies
@@ -45,11 +44,7 @@ impl Config {
                 .build()
                 .unwrap();
 
-            return RequestInfo {
-                jar,
-                client,
-                url: &url,
-            };
+            return RequestInfo { client, url: &url };
         } else {
             panic!("No Default value!");
         }
@@ -68,7 +63,7 @@ impl Config {
     }
 
     pub fn activate_url(&mut self, url: &Url) {
-        if self.cookies.get(&url).is_none() {
+        if !self.cookies.contains_key(&url) {
             println!("{} is not stored", &url);
             return;
         }

@@ -1,17 +1,14 @@
-use std::{collections::HashMap, path::PathBuf, thread, time::Duration};
-
-use humansize::{format_size, DECIMAL};
-use reqwest::blocking::multipart::Form;
-use serde::Deserialize;
-use url::Url;
-
+use super::util::TorrentState;
 use crate::{
     backend::util::{self, confirm, epoch_to_datetime, exit_if_expired, progress_render},
     cli::TorrentSortingOptions,
     config::RequestInfo,
 };
-
-use super::util::TorrentState;
+use humansize::{format_size, DECIMAL};
+use reqwest::blocking::multipart::Form;
+use serde::Deserialize;
+use std::{collections::HashMap, path::PathBuf, thread, time::Duration};
+use url::Url;
 
 #[derive(Debug, Deserialize)]
 struct TorrentInfoResponse {
@@ -174,41 +171,38 @@ pub fn add_torrent(info: &RequestInfo, url_or_path: String, pause: bool) {
         return;
     }
 
-    if let Ok(path) = PathBuf::try_from(&url_or_path) {
-        let form = match form.file("torrents", &path) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("Failed reading file '{}': {}", &path.display(), e);
-                return;
-            }
-        };
-        let form = form.text("paused", pause.to_string());
-
-        let file_res = info
-            .client
-            .post(info.url.join("api/v2/torrents/add").unwrap())
-            .multipart(form)
-            .send()
-            .unwrap();
-        exit_if_expired(&file_res);
-
-        if file_res.text().unwrap() == "Ok." {
-            println!("Added torrent file.");
-        } else {
-            eprintln!("Adding torrent file failed.");
+    let path = PathBuf::from(&url_or_path);
+    let form = match form.file("torrents", &path) {
+        Ok(v) => v,
+        Err(e) => {
+            eprintln!("Failed reading file '{}': {}", &path.display(), e);
+            return;
         }
+    };
+    let form = form.text("paused", pause.to_string());
 
-        return;
+    let file_res = info
+        .client
+        .post(info.url.join("api/v2/torrents/add").unwrap())
+        .multipart(form)
+        .send()
+        .unwrap();
+    exit_if_expired(&file_res);
+
+    if file_res.text().unwrap() == "Ok." {
+        println!("Added torrent file.");
+    } else {
+        eprintln!("Adding torrent file failed.");
     }
 
-    eprintln!("Provided data was not a valid url or a path");
+    return;
 }
 
 pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bool) {
-    let mut formdata: HashMap<&str, String> = HashMap::new();
+    let mut multipart = Form::new();
 
-    formdata.insert("deleteFiles", delete_files.to_string());
-    formdata.insert("hashes", hashes.join("|"));
+    multipart = multipart.text("deleteFiles", delete_files.to_string());
+    multipart = multipart.text("hashes", hashes.join("|"));
 
     if !confirm(
         &format!(
@@ -228,7 +222,7 @@ pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bo
     let delete_res = info
         .client
         .post(info.url.join("api/v2/torrents/delete").unwrap())
-        .form(&formdata)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&delete_res);
@@ -237,14 +231,14 @@ pub fn delete_torrents(info: &RequestInfo, hashes: Vec<String>, delete_files: bo
 }
 
 pub fn pause_torrent(info: &RequestInfo, hash: String) {
-    let mut formdata: HashMap<&str, String> = HashMap::new();
+    let mut multipart = Form::new();
 
-    formdata.insert("hashes", hash);
+    multipart = multipart.text("hashes", hash);
 
     let res = info
         .client
         .post(info.url.join("api/v2/torrents/pause").unwrap())
-        .form(&formdata)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&res);
@@ -253,14 +247,14 @@ pub fn pause_torrent(info: &RequestInfo, hash: String) {
 }
 
 pub fn resume_torrent(info: &RequestInfo, hash: String) {
-    let mut formdata: HashMap<&str, String> = HashMap::new();
+    let mut multipart = Form::new();
 
-    formdata.insert("hashes", hash);
+    multipart = multipart.text("hashes", hash);
 
     let res = info
         .client
         .post(info.url.join("api/v2/torrents/resume").unwrap())
-        .form(&formdata)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&res);
@@ -269,14 +263,14 @@ pub fn resume_torrent(info: &RequestInfo, hash: String) {
 }
 
 pub fn recheck(info: &RequestInfo, hash: String) {
-    let mut formdata: HashMap<&str, String> = HashMap::new();
+    let mut multipart = Form::new();
 
-    formdata.insert("hashes", hash);
+    multipart = multipart.text("hashes", hash);
 
     let res = info
         .client
         .post(info.url.join("api/v2/torrents/recheck").unwrap())
-        .form(&formdata)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&res);
@@ -285,14 +279,14 @@ pub fn recheck(info: &RequestInfo, hash: String) {
 }
 
 pub fn reannounce(info: &RequestInfo, hash: String) {
-    let mut formdata: HashMap<&str, String> = HashMap::new();
+    let mut multipart = Form::new();
 
-    formdata.insert("hashes", hash);
+    multipart = multipart.text("hashes", hash);
 
     let res = info
         .client
         .post(info.url.join("api/v2/torrents/reannounce").unwrap())
-        .form(&formdata)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&res);

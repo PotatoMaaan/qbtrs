@@ -3,7 +3,7 @@ use std::{
     process::exit,
 };
 
-use chrono::NaiveDateTime;
+use chrono::{DateTime, NaiveDateTime};
 use reqwest::blocking::Response;
 use serde::Deserialize;
 
@@ -142,5 +142,5 @@ pub fn exit_if_expired(res: &Response) {
 }
 
 pub fn epoch_to_datetime(epoch: i64) -> NaiveDateTime {
-    NaiveDateTime::from_timestamp_opt(epoch, 0).unwrap()
+    DateTime::from_timestamp(epoch, 0).unwrap().naive_local()
 }

@@ -125,7 +125,7 @@ pub fn handle_cli(args: BaseCommand, dirs: &ProjectDirs, config: &mut Config) {
     }
 }
 
-fn get_info_if_default(config: &Config) -> RequestInfo {
+fn get_info_if_default(config: &Config) -> RequestInfo<'_> {
     if config.default.is_none() || config.cookies.is_empty() {
         eprintln!("No (default) url configured. Please configure a url using the auth subcommand!");
         exit(1);

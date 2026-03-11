@@ -1,13 +1,8 @@
-use std::{
-    collections::HashMap,
-    io::{self, Write},
-};
-
+use super::util::exit_if_expired;
 use reqwest::blocking::{Client, ClientBuilder};
 use rpassword::read_password;
+use std::io::{self, Write};
 use url::Url;
-
-use super::util::exit_if_expired;
 
 pub fn auth_interactive(
     url: Url,
@@ -25,15 +20,14 @@ pub fn auth_interactive(
         password = read_password().unwrap();
     }
 
-    let map: HashMap<&str, &str> = HashMap::from([
-        ("username", username.as_str()),
-        ("password", password.as_str()),
-    ]);
+    let multipart = reqwest::blocking::multipart::Form::new()
+        .text("username", username)
+        .text("password", password);
 
     let login_res = client
         .post(url.join("api/v2/auth/login").unwrap().to_string())
         .header("Referer", &url.to_string())
-        .form(&map)
+        .multipart(multipart)
         .send()
         .unwrap();
     exit_if_expired(&login_res);
